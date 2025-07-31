@@ -82,10 +82,10 @@ def render_results(results, title):
     if results:
         st.subheader(f"검색 결과 ({title}) - {len(results)}건")
         option_labels = [
-            f"[{idx+1}] {rec['title']}
+            f"""[{idx+1}] {rec['title']}
 출처: {rec['source']}
 원인: {rec['description']}
-대응내용: {rec['response'][:50]}..."
+대응내용: {rec['response'][:50]}..."""
             for idx, rec in enumerate(results)
         ]
         selected = st.radio(f"결과 목록 ({title})", option_labels, index=0, key=f"result_radio_{title}")
