@@ -94,7 +94,7 @@ def render_results(results, title):
 
         st.markdown("### 파트너사 전달 문구")
         st.code(rec["response"], language="text")
-        st.button("복사하기", on_click=lambda: st.session_state.update({f"copied_{title}": True}))
+        st.button("복사하기", key=f"copy_button_{title}", on_click=lambda: st.session_state.update({f"copied_{title}": True}))
         if st.session_state.get(f"copied_{title}"):
             st.success("복사되었습니다! (Ctrl+C / Command+C)")
 
