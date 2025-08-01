@@ -3,6 +3,12 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Any
 
+import re
+
+def remove_mentions(text: str) -> str:
+    return re.sub(r"<@([A-Z0-9]+)>", "", text).strip()
+
+
 st.set_page_config(page_title="파트너 대응 검색 봇", layout="wide")
 
 @st.cache_data
@@ -54,6 +60,8 @@ def load_data() -> Dict[str, List[Dict[str, Any]]]:
             response = str(row.get("답변") or "").strip()
             if not title and not response:
                 continue
+            # 멘션 제거
+            response = remove_mentions(response)
             data["slack"].append({
                 "source": file3.name,
                 "title": title,
