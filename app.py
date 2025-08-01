@@ -2,12 +2,10 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Any
-
 import re
 
 def remove_mentions(text: str) -> str:
     return re.sub(r"<@([A-Z0-9]+)>", "", text).strip()
-
 
 st.set_page_config(page_title="파트너 대응 검색 봇", layout="wide")
 
@@ -22,9 +20,9 @@ def load_data() -> Dict[str, List[Dict[str, Any]]]:
     if file1.exists():
         df1 = pd.read_excel(file1)
         for _, row in df1.iterrows():
-            title = str(row.get("문제내용") or row.get("발생 문제 구분") or "").strip()
-            description = str(row.get("발생문제 항목값") or "").strip()
-            response = str(row.get("응대방법") or row.get("해결방안") or "").strip()
+            title = remove_mentions(str(row.get("문제내용") or row.get("발생 문제 구분") or "").strip())
+            description = remove_mentions(str(row.get("발생문제 항목값") or "").strip())
+            response = remove_mentions(str(row.get("응대방법") or row.get("해결방안") or "").strip())
             if not title and not response:
                 continue
             data["regular"].append({
@@ -39,10 +37,10 @@ def load_data() -> Dict[str, List[Dict[str, Any]]]:
         for sheet in xls.sheet_names:
             df = pd.read_excel(xls, sheet)
             for _, row in df.iterrows():
-                error_code = str(row.get("오류 코드") or "").strip()
+                error_code = remove_mentions(str(row.get("오류 코드") or "").strip())
                 title = f"{sheet} - {error_code}" if error_code else sheet
-                description = str(row.get("원인") or "").strip()
-                response = str(row.get("대응내용") or "").strip()
+                description = remove_mentions(str(row.get("원인") or "").strip())
+                response = remove_mentions(str(row.get("대응내용") or "").strip())
                 if not response and not description:
                     continue
                 data["regular"].append({
@@ -55,13 +53,11 @@ def load_data() -> Dict[str, List[Dict[str, Any]]]:
     if file3.exists():
         df3 = pd.read_excel(file3)
         for _, row in df3.iterrows():
-            title = str(row.get("질문") or "").strip()
-            description = str(row.get("상세") or "").strip()
-            response = str(row.get("답변") or "").strip()
+            title = remove_mentions(str(row.get("질문") or "").strip())
+            description = remove_mentions(str(row.get("상세") or "").strip())
+            response = remove_mentions(str(row.get("답변") or "").strip())
             if not title and not response:
                 continue
-            # 멘션 제거
-            response = remove_mentions(response)
             data["slack"].append({
                 "source": file3.name,
                 "title": title,
@@ -89,13 +85,19 @@ def search_records(query: str, records: List[Dict[str, Any]], top_n: int = 10):
 def render_results(results, title):
     if results:
         st.subheader(f"검색 결과 ({title}) - {len(results)}건")
-        option_labels = [
-            f"""[{idx+1}] {rec['title']}
-출처: {rec['source']}
-원인: {rec['description']}
-대응내용: {rec['response'][:50]}..."""
-            for idx, rec in enumerate(results)
-        ]
+        option_labels = []
+        for idx, rec in enumerate(results):
+            label = (
+                f"[{idx+1}] {rec['title']}
+"
+                f"출처: {rec['source']}
+"
+                f"원인: {rec['description']}
+"
+                f"대응내용: {rec['response'][:50]}..."
+            )
+            option_labels.append(label)
+
         selected = st.radio(f"결과 목록 ({title})", option_labels, index=0, key=f"result_radio_{title}")
         sel_idx = option_labels.index(selected)
         rec = results[sel_idx]
@@ -111,10 +113,10 @@ def main():
     st.title("파트너 대응 검색 봇")
     st.markdown(
         """**사용 방법**  
-    1. 검색어를 입력합니다.  
-    2. 기존 데이터와 메카닉 응답 데이터가 분리되어 검색됩니다.  
-    3. 각각의 결과에서 항목을 선택하면 전달 문장이 생성됩니다.  
-    """
+1. 검색어를 입력합니다.  
+2. 기존 데이터와 메카닉 응답 데이터가 분리되어 검색됩니다.  
+3. 각각의 결과에서 항목을 선택하면 전달 문장이 생성됩니다.  
+"""
     )
 
     all_data = load_data()
